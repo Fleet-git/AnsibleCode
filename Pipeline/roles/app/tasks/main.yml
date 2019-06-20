@@ -1,0 +1,72 @@
+---
+- name: Assert that target machine(s) are Redhat or Centos
+  assert:
+    that: ansible_distribution == "RedHat" or ansible_distribution == "Red Hat Enterprise Linux"
+    fail_msg: "Target Machine is not centos or rhel"
+
+- name: Set available packages as ansible facts
+  package_facts:
+    manager: auto
+
+- name: Install Apache
+  package: 
+    name: httpd
+    state: present
+  become: yes
+  become_method: sudo
+  when: '"httpd" not in ansible_facts.packages'
+
+- name: Create directory structure for jenkins artifacts
+  file:
+    path: "{{ artifacts_folder }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: 0755
+
+- name: Start apache service
+  service: name=httpd state=started
+
+- name: Copy app artifacts to "{{ artifacts_folder }}"
+  copy:
+    src: "{{ source_dir }}"
+    dest: "{{ artifacts_folder }}"
+
+- name: Move files to document root and notify apache handler
+  copy:
+    src: "{{ artifact_files }}"
+    dest: "{{ document_root }}"
+    remote_src: yes
+    owner: "apache"
+    group: "apache"
+    mode: "0755"
+  register: app_copy_done
+  notify: Restart apache
+
+- name: Check if restart is required if files modified in "{{ document_root }}"
+  set_fact:
+    apache_restart_required: yes
+  when: app_copy_done
+
+- meta: flush_handlers
+
+- name: Validate URL is accessible
+  uri:
+    url: "{{ app_url }}"
+    status_code: 200
+    timeout: 5
+    follow_redirects: safe
+    method: GET
+  register: app_url_status
+  # Keep trying for 5 mins in 5 sec intervals
+  retries: 60
+  delay: 5
+  until: >
+    'status' in app_url_status and
+     app_url_status['status'] == 200
+  when: apache_restart_required
+
+- name: Reset the apache restart fact
+  set_fact:
+    apache_restart_required: no
+  when: apache_restart_required

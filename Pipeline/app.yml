@@ -1,0 +1,4 @@
+---
+- hosts: "{{ env | default('staging') }}"
+  roles:
+  - { role: app, tags: app_deployment }

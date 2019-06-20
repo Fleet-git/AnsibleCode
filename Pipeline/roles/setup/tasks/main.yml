@@ -1,0 +1,17 @@
+---
+- name: Copy the ssh public key of deploy user to all machines
+  authorized_key:
+    user: root
+    state: present
+    key: "{{ lookup('file', 'files/id_rsa.pub') }}"
+    path: "{{ keys_path }}"
+
+- name: Add sudoers entry to grant sudo-root for deploy user
+  lineinfile:
+    path: "{{ sudoers_file }}"
+    state: present
+    backup: yes
+    line: "{{ no_passwd_line }}"
+    validate: "{{ validation_command }}"
+    create: yes
+    mode: 0440

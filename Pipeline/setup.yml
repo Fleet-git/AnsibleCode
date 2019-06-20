@@ -1,0 +1,4 @@
+---
+- hosts: all
+  roles:
+  - { role: setup, tags: setup_ansible_keys }

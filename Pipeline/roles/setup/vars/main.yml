@@ -1,0 +1,4 @@
+sudoers_file: /etc/sudoers.d/root
+no_passwd_line: "root ALL=(ALL)  NOPASSWD: ALL"
+validation_command: "/usr/sbin/visudo -cf %s"
+keys_path: /etc/ssh/userkeys/root/authorized_key

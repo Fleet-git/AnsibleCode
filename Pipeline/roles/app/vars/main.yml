@@ -1,0 +1,9 @@
+---
+artifacts_path: "/opt/artificats"
+artifacts_folder: "{{ artifacts_path }}/{{ app_version }}/"
+deploy_user: "root"
+jenkins_work_dir: "/var/lib/jenkins"
+source_dir: "{{ jenkins_work_dir }}/workspace/Parameterized-Build"
+artifact_files: "{{ artifacts_folder }}/Parameterized-Build/"
+document_root: "/var/www/html"
+app_url: "http://{{ inventory_hostname }}/index.html"
